@@ -1,56 +1,52 @@
-const express = require('express');
-const urlRoutes = require('./routes/url.js');
 
-const URL = require('./models/url');
+const express = require('express')
+const URLroute = require('./routes/url.routes.js')
+const URL = require('./models/url.models.js')
+const connectDb = require('./db/connect.js')
+const dotenv = require('dotenv').config();
 
-const mongoose = require('mongoose');
+
+
+
+
+
+connectDb();
 
 const app = express();
 
-const PORT = 8001;
+
+
+const PORT = 3000
+
+app.use(express.json())
+
+app.use(express.urlencoded({ extended: true }))
+app.use('/url', URLroute)
 
 
 
-const CONNECTION_URL = 'mongodb+srv://canttell:canttell@cluster0.bqkv7pk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
+// shortID is a dynamic route and is treated as a variable
+app.get('/:shortID', async (req, res) => {
 
-app.use(express.json());
+    // shortID requested
+    const shortID = req.params.shortID;
 
+    const result = await URL.findOneAndUpdate({
 
-app.use('/url', urlRoutes);
+        // what you have to find ( shortID)
+        shortID
 
-app.get('/:shortid', async (req, res) => {
-
-    const shortid = req.params.shortid;
-    const entry = await URL.findOneAndUpdate({
-        shortid
     }, {
-        $push: {
-            visithistory: {
-                timestamps: Date.now()
-            }
-        }
+        // what you have to update
+        visitHistory: { $push: { timestamps: Date.now() } }
     })
 
-    res.redirect(entry.redirectingurl);
-
-
-
+    res.redirect(result.redirectingURL)
 
 })
 
 
-
-
-
-
-mongoose.connect(CONNECTION_URL, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => {
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
-    })
-    .catch((error) => {
-        console.log(error.message);
-    });
-
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`)
+}) 
